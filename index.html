@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mindys Munchies - Performance Reports</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #888;
+            margin-bottom: 40px;
+        }
+        .report-card {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-decoration: none;
+            display: block;
+        }
+        .report-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            border-color: rgba(240, 147, 251, 0.3);
+        }
+        .report-card h2 {
+            color: #fff;
+            margin-bottom: 10px;
+        }
+        .report-card p {
+            color: #888;
+            font-size: 0.95rem;
+        }
+        .badge {
+            display: inline-block;
+            background: rgba(46, 213, 115, 0.2);
+            color: #2ed573;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-top: 15px;
+        }
+        footer {
+            margin-top: 40px;
+            color: #666;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Mindys Munchies</h1>
+        <p class="subtitle">Performance Reports & Analytics</p>
+
+        <a href="reports/sales/" class="report-card">
+            <h2>Sales Performance Dashboard</h2>
+            <p>19-month revenue analysis, traffic sources, YoY comparisons, and customer insights</p>
+            <span class="badge">Updated Mar 17, 2026</span>
+        </a>
+
+        <footer>
+            Prepared by Aumcore | Powered by AI Digital Consulting
+        </footer>
+    </div>
+</body>
+</html>

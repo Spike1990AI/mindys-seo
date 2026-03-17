@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mindys Munchies - Sales Performance Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: #888;
+            font-size: 1.1rem;
+        }
+
+        .date-range {
+            display: inline-block;
+            background: rgba(245, 87, 108, 0.2);
+            padding: 8px 20px;
+            border-radius: 20px;
+            margin-top: 15px;
+            font-size: 0.95rem;
+            color: #f5576c;
+        }
+
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .kpi-card {
+            background: rgba(255,255,255,0.08);
+            padding: 25px;
+            border-radius: 16px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .kpi-card .value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .kpi-card .label {
+            color: #888;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .kpi-card .change {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            padding: 4px 10px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+
+        .kpi-card .change.positive {
+            background: rgba(46, 213, 115, 0.2);
+            color: #2ed573;
+        }
+
+        .kpi-card .change.negative {
+            background: rgba(255, 71, 87, 0.2);
+            color: #ff4757;
+        }
+
+        .kpi-card.revenue .value { color: #2ed573; }
+        .kpi-card.orders .value { color: #54a0ff; }
+        .kpi-card.aov .value { color: #f093fb; }
+        .kpi-card.customers .value { color: #feca57; }
+
+        /* Chart Sections */
+        .section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section h2 .icon {
+            font-size: 1.5rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+        }
+
+        .chart-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        @media (max-width: 900px) {
+            .chart-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Data Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .data-table th {
+            text-align: left;
+            padding: 12px 15px;
+            background: rgba(255,255,255,0.08);
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+        }
+
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .data-table tr:hover {
+            background: rgba(255,255,255,0.03);
+        }
+
+        .data-table .positive { color: #2ed573; }
+        .data-table .negative { color: #ff4757; }
+        .data-table .highlight {
+            background: linear-gradient(90deg, rgba(240, 147, 251, 0.1), transparent);
+        }
+
+        /* Source badges */
+        .source-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .source-badge.organic { background: rgba(46, 213, 115, 0.2); color: #2ed573; }
+        .source-badge.direct { background: rgba(84, 160, 255, 0.2); color: #54a0ff; }
+        .source-badge.paid { background: rgba(255, 159, 67, 0.2); color: #ff9f43; }
+        .source-badge.referral { background: rgba(240, 147, 251, 0.2); color: #f093fb; }
+
+        /* YoY Comparison */
+        .yoy-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .yoy-card {
+            background: rgba(255,255,255,0.03);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .yoy-card .metric {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 10px;
+        }
+
+        .yoy-card .values {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 10px;
+        }
+
+        .yoy-card .year {
+            font-size: 0.75rem;
+            color: #666;
+        }
+
+        .yoy-card .amount {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .yoy-card .change-pct {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        /* Executive Summary */
+        .exec-summary {
+            background: linear-gradient(135deg, rgba(46, 213, 115, 0.1), rgba(84, 160, 255, 0.1));
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border-left: 4px solid #2ed573;
+        }
+
+        .exec-summary h3 {
+            margin-bottom: 15px;
+            color: #2ed573;
+        }
+
+        .exec-summary ul {
+            list-style: none;
+            line-height: 1.8;
+        }
+
+        .exec-summary li {
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .exec-summary li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #2ed573;
+        }
+
+        .highlight-stat {
+            background: rgba(255,255,255,0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        footer .logo {
+            margin-bottom: 10px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Mindys Munchies</h1>
+            <p>Sales Performance Dashboard</p>
+            <div class="date-range">September 2024 - March 2026 (19 months)</div>
+        </header>
+
+        <!-- Executive Summary -->
+        <div class="exec-summary">
+            <h3>📊 Executive Summary</h3>
+            <ul>
+                <li><span class="highlight-stat">£295,595</span> total revenue across 19 months (3,544 orders)</li>
+                <li>December months are peak: <span class="highlight-stat">£126,555</span> combined (Dec '24 + Dec '25)</li>
+                <li>Google drives <span class="highlight-stat">51%</span> of attributed revenue - top traffic source</li>
+                <li>Returning customers generate <span class="highlight-stat">54%</span> of revenue - strong loyalty</li>
+                <li>YoY Feb comparison: <span class="highlight-stat positive">+39%</span> revenue (£15.6K → £21.7K)</li>
+            </ul>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+            <div class="kpi-card revenue">
+                <div class="value">£295,595</div>
+                <div class="label">Total Revenue</div>
+                <div class="change positive">19-month total</div>
+            </div>
+            <div class="kpi-card orders">
+                <div class="value">3,544</div>
+                <div class="label">Total Orders</div>
+                <div class="change positive">Completed + Processing</div>
+            </div>
+            <div class="kpi-card aov">
+                <div class="value">£83.42</div>
+                <div class="label">Average Order Value</div>
+                <div class="change positive">All-time average</div>
+            </div>
+            <div class="kpi-card customers">
+                <div class="value">69%</div>
+                <div class="label">Holiday Lift</div>
+                <div class="change positive">Dec vs avg month</div>
+            </div>
+        </div>
+
+        <!-- Revenue & Orders Chart -->
+        <div class="section">
+            <h2><span class="icon">📈</span> Monthly Revenue & Orders</h2>
+            <div class="chart-container">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Source Analysis -->
+        <div class="chart-row">
+            <div class="section">
+                <h2><span class="icon">🎯</span> Traffic Source Mix</h2>
+                <div class="chart-container">
+                    <canvas id="sourceChart"></canvas>
+                </div>
+            </div>
+            <div class="section">
+                <h2><span class="icon">👥</span> New vs Returning</h2>
+                <div class="chart-container">
+                    <canvas id="customerChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Breakdown Table -->
+        <div class="section">
+            <h2><span class="icon">📋</span> Monthly Performance Breakdown</h2>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Orders</th>
+                        <th>Revenue</th>
+                        <th>AOV</th>
+                        <th>Top Source</th>
+                        <th>Refunds</th>
+                        <th>YoY Change</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="highlight">
+                        <td><strong>Mar 2026</strong> (MTD)</td>
+                        <td>70</td>
+                        <td>£5,107</td>
+                        <td>£72.96</td>
+                        <td><span class="source-badge organic">Organic</span></td>
+                        <td>£316</td>
+                        <td class="negative">-57%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Feb 2026</strong></td>
+                        <td>291</td>
+                        <td>£21,692</td>
+                        <td>£74.54</td>
+                        <td><span class="source-badge organic">Organic</span></td>
+                        <td>£162</td>
+                        <td class="positive">+39%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Jan 2026</strong></td>
+                        <td>125</td>
+                        <td>£10,898</td>
+                        <td>£87.18</td>
+                        <td><span class="source-badge direct">Direct</span></td>
+                        <td>£57</td>
+                        <td class="positive">+11%</td>
+                    </tr>
+                    <tr class="highlight">
+                        <td><strong>Dec 2025</strong></td>
+                        <td>615</td>
+                        <td>£66,508</td>
+                        <td>£108.14</td>
+                        <td><span class="source-badge direct">Direct</span></td>
+                        <td>£1,024</td>
+                        <td class="positive">+11%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Nov 2025</strong></td>
+                        <td>141</td>
+                        <td>£13,579</td>
+                        <td>£96.31</td>
+                        <td><span class="source-badge organic">Organic</span></td>
+                        <td>£182</td>
+                        <td class="positive">+21%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Oct 2025</strong></td>
+                        <td>146</td>
+                        <td>£11,202</td>
+                        <td>£76.73</td>
+                        <td><span class="source-badge organic">Organic</span></td>
+                        <td>£304</td>
+                        <td class="positive">+25%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Sep 2025</strong></td>
+                        <td>112</td>
+                        <td>£7,893</td>
+                        <td>£70.47</td>
+                        <td><span class="source-badge organic">Organic</span></td>
+                        <td>£423</td>
+                        <td class="positive">+147%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Aug 2025</strong></td>
+                        <td>78</td>
+                        <td>£5,984</td>
+                        <td>£76.71</td>
+                        <td><span class="source-badge direct">Direct</span></td>
+                        <td>£258</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Jul 2025</strong></td>
+                        <td>91</td>
+                        <td>£7,575</td>
+                        <td>£83.24</td>
+                        <td><span class="source-badge organic">Organic</span></td>
+                        <td>£216</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Jun 2025</strong></td>
+                        <td>104</td>
+                        <td>£8,331</td>
+                        <td>£80.10</td>
+                        <td><span class="source-badge organic">Organic</span></td>
+                        <td>£68</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td><strong>May 2025</strong></td>
+                        <td>183</td>
+                        <td>£12,044</td>
+                        <td>£65.82</td>
+                        <td><span class="source-badge organic">Organic</span></td>
+                        <td>£839</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Apr 2025</strong></td>
+                        <td>176</td>
+                        <td>£14,042</td>
+                        <td>£79.78</td>
+                        <td><span class="source-badge organic">Organic</span></td>
+                        <td>£190</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Mar 2025</strong></td>
+                        <td>137</td>
+                        <td>£11,883</td>
+                        <td>£86.73</td>
+                        <td><span class="source-badge organic">Organic</span></td>
+                        <td>£248</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Feb 2025</strong></td>
+                        <td>256</td>
+                        <td>£15,635</td>
+                        <td>£61.07</td>
+                        <td><span class="source-badge organic">Organic</span></td>
+                        <td>£158</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Jan 2025</strong></td>
+                        <td>112</td>
+                        <td>£9,784</td>
+                        <td>£87.36</td>
+                        <td><span class="source-badge organic">Organic</span></td>
+                        <td>£51</td>
+                        <td>-</td>
+                    </tr>
+                    <tr class="highlight">
+                        <td><strong>Dec 2024</strong></td>
+                        <td>511</td>
+                        <td>£60,047</td>
+                        <td>£117.51</td>
+                        <td><span class="source-badge organic">Organic</span></td>
+                        <td>£1,240</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Nov 2024</strong></td>
+                        <td>108</td>
+                        <td>£11,267</td>
+                        <td>£104.32</td>
+                        <td><span class="source-badge organic">Organic</span></td>
+                        <td>£141</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Oct 2024</strong></td>
+                        <td>119</td>
+                        <td>£8,930</td>
+                        <td>£75.04</td>
+                        <td><span class="source-badge organic">Organic</span></td>
+                        <td>£677</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Sep 2024</strong></td>
+                        <td>59</td>
+                        <td>£3,197</td>
+                        <td>£54.18</td>
+                        <td><span class="source-badge direct">Direct</span></td>
+                        <td>£256</td>
+                        <td>-</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- UTM Source Breakdown -->
+        <div class="section">
+            <h2><span class="icon">🔍</span> Traffic Source Deep Dive (All Time)</h2>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Source</th>
+                        <th>Orders</th>
+                        <th>Revenue</th>
+                        <th>% of Total</th>
+                        <th>Avg AOV</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Google</strong> (organic + paid)</td>
+                        <td>1,588</td>
+                        <td>£134,488</td>
+                        <td>45.5%</td>
+                        <td>£84.69</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Direct / Type-in</strong></td>
+                        <td>1,021</td>
+                        <td>£84,526</td>
+                        <td>28.6%</td>
+                        <td>£82.79</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Google My Business</strong></td>
+                        <td>156</td>
+                        <td>£12,190</td>
+                        <td>4.1%</td>
+                        <td>£78.14</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Bing</strong></td>
+                        <td>116</td>
+                        <td>£15,159</td>
+                        <td>5.1%</td>
+                        <td>£130.68</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Email (sqmktg)</strong></td>
+                        <td>37</td>
+                        <td>£3,526</td>
+                        <td>1.2%</td>
+                        <td>£95.30</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Yahoo</strong></td>
+                        <td>40</td>
+                        <td>£4,167</td>
+                        <td>1.4%</td>
+                        <td>£104.18</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Yelp</strong></td>
+                        <td>14</td>
+                        <td>£1,183</td>
+                        <td>0.4%</td>
+                        <td>£84.50</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Facebook/Instagram</strong></td>
+                        <td>13</td>
+                        <td>£1,342</td>
+                        <td>0.5%</td>
+                        <td>£103.23</td>
+                    </tr>
+                    <tr>
+                        <td><strong>DuckDuckGo</strong></td>
+                        <td>17</td>
+                        <td>£1,432</td>
+                        <td>0.5%</td>
+                        <td>£84.24</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ChatGPT</strong></td>
+                        <td>4</td>
+                        <td>£372</td>
+                        <td>0.1%</td>
+                        <td>£93.00</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Other</strong></td>
+                        <td>538</td>
+                        <td>£37,210</td>
+                        <td>12.6%</td>
+                        <td>£69.16</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- YoY Comparison -->
+        <div class="section">
+            <h2><span class="icon">📊</span> Year-over-Year Comparison</h2>
+            <div class="yoy-grid">
+                <div class="yoy-card">
+                    <div class="metric">December</div>
+                    <div class="values">
+                        <div>
+                            <div class="year">2024</div>
+                            <div class="amount">£60,047</div>
+                        </div>
+                        <div>
+                            <div class="year">2025</div>
+                            <div class="amount">£66,508</div>
+                        </div>
+                    </div>
+                    <div class="change-pct positive">+10.8%</div>
+                </div>
+                <div class="yoy-card">
+                    <div class="metric">November</div>
+                    <div class="values">
+                        <div>
+                            <div class="year">2024</div>
+                            <div class="amount">£11,267</div>
+                        </div>
+                        <div>
+                            <div class="year">2025</div>
+                            <div class="amount">£13,579</div>
+                        </div>
+                    </div>
+                    <div class="change-pct positive">+20.5%</div>
+                </div>
+                <div class="yoy-card">
+                    <div class="metric">October</div>
+                    <div class="values">
+                        <div>
+                            <div class="year">2024</div>
+                            <div class="amount">£8,930</div>
+                        </div>
+                        <div>
+                            <div class="year">2025</div>
+                            <div class="amount">£11,202</div>
+                        </div>
+                    </div>
+                    <div class="change-pct positive">+25.4%</div>
+                </div>
+                <div class="yoy-card">
+                    <div class="metric">February</div>
+                    <div class="values">
+                        <div>
+                            <div class="year">2025</div>
+                            <div class="amount">£15,635</div>
+                        </div>
+                        <div>
+                            <div class="year">2026</div>
+                            <div class="amount">£21,692</div>
+                        </div>
+                    </div>
+                    <div class="change-pct positive">+38.7%</div>
+                </div>
+                <div class="yoy-card">
+                    <div class="metric">January</div>
+                    <div class="values">
+                        <div>
+                            <div class="year">2025</div>
+                            <div class="amount">£9,784</div>
+                        </div>
+                        <div>
+                            <div class="year">2026</div>
+                            <div class="amount">£10,898</div>
+                        </div>
+                    </div>
+                    <div class="change-pct positive">+11.4%</div>
+                </div>
+                <div class="yoy-card">
+                    <div class="metric">September</div>
+                    <div class="values">
+                        <div>
+                            <div class="year">2024</div>
+                            <div class="amount">£3,197</div>
+                        </div>
+                        <div>
+                            <div class="year">2025</div>
+                            <div class="amount">£7,893</div>
+                        </div>
+                    </div>
+                    <div class="change-pct positive">+146.9%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Insights -->
+        <div class="section">
+            <h2><span class="icon">💡</span> Key Insights & Recommendations</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div style="background: rgba(46, 213, 115, 0.1); padding: 20px; border-radius: 12px; border-left: 4px solid #2ed573;">
+                    <h4 style="color: #2ed573; margin-bottom: 10px;">✅ Strengths</h4>
+                    <ul style="line-height: 1.8; padding-left: 20px;">
+                        <li>Strong YoY growth (+11% to +39% across comparable months)</li>
+                        <li>December peak revenue: £66.5K (69% repeat customers)</li>
+                        <li>Google organic dominates (45% of revenue) - SEO working</li>
+                        <li>Bing users have highest AOV (£130.68)</li>
+                        <li>Email marketing converts well (£95.30 AOV)</li>
+                    </ul>
+                </div>
+                <div style="background: rgba(255, 159, 67, 0.1); padding: 20px; border-radius: 12px; border-left: 4px solid #ff9f43;">
+                    <h4 style="color: #ff9f43; margin-bottom: 10px;">⚡ Opportunities</h4>
+                    <ul style="line-height: 1.8; padding-left: 20px;">
+                        <li>Scale Google My Business (only 4.1% of revenue, high intent)</li>
+                        <li>Increase Bing Ads spend (£130.68 AOV vs £84.69 avg)</li>
+                        <li>Grow email list for holiday season push</li>
+                        <li>ChatGPT appearing as referrer - optimize for AI search</li>
+                        <li>March typically slow - plan Q2 promotions</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <div class="logo">AI Digital Consulting</div>
+            <p>Generated: March 17, 2026 | Data Source: WooCommerce HPOS</p>
+        </footer>
+    </div>
+
+    <script>
+        // Revenue & Orders Chart
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        new Chart(revenueCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Sep 24', 'Oct 24', 'Nov 24', 'Dec 24', 'Jan 25', 'Feb 25', 'Mar 25', 'Apr 25', 'May 25', 'Jun 25', 'Jul 25', 'Aug 25', 'Sep 25', 'Oct 25', 'Nov 25', 'Dec 25', 'Jan 26', 'Feb 26', 'Mar 26'],
+                datasets: [{
+                    label: 'Revenue (£)',
+                    data: [3197, 8930, 11267, 60047, 9784, 15635, 11883, 14042, 12044, 8331, 7575, 5984, 7893, 11202, 13579, 66508, 10898, 21692, 5107],
+                    backgroundColor: 'rgba(46, 213, 115, 0.7)',
+                    borderColor: '#2ed573',
+                    borderWidth: 1,
+                    yAxisID: 'y'
+                }, {
+                    label: 'Orders',
+                    data: [59, 119, 108, 511, 112, 256, 137, 176, 183, 104, 91, 78, 112, 146, 141, 615, 125, 291, 70],
+                    type: 'line',
+                    borderColor: '#54a0ff',
+                    backgroundColor: 'rgba(84, 160, 255, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    yAxisID: 'y1'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    legend: {
+                        labels: { color: '#888' }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#888' },
+                        grid: { color: 'rgba(255,255,255,0.05)' }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        ticks: {
+                            color: '#2ed573',
+                            callback: function(value) { return '£' + value.toLocaleString(); }
+                        },
+                        grid: { color: 'rgba(255,255,255,0.05)' }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        ticks: { color: '#54a0ff' },
+                        grid: { drawOnChartArea: false }
+                    }
+                }
+            }
+        });
+
+        // Source Mix Chart
+        const sourceCtx = document.getElementById('sourceChart').getContext('2d');
+        new Chart(sourceCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Organic', 'Direct/Type-in', 'Paid (UTM)', 'Referral'],
+                datasets: [{
+                    data: [112532, 84526, 35244, 28293],
+                    backgroundColor: [
+                        'rgba(46, 213, 115, 0.8)',
+                        'rgba(84, 160, 255, 0.8)',
+                        'rgba(255, 159, 67, 0.8)',
+                        'rgba(240, 147, 251, 0.8)'
+                    ],
+                    borderColor: '#1a1a2e',
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#888',
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let value = context.raw;
+                                let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                let percentage = ((value / total) * 100).toFixed(1);
+                                return `£${value.toLocaleString()} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // New vs Returning Chart
+        const customerCtx = document.getElementById('customerChart').getContext('2d');
+        new Chart(customerCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Sep 24', 'Oct 24', 'Nov 24', 'Dec 24', 'Jan 25', 'Feb 25', 'Mar 25', 'Apr 25', 'May 25', 'Jun 25', 'Jul 25', 'Aug 25', 'Sep 25', 'Oct 25', 'Nov 25', 'Dec 25', 'Jan 26', 'Feb 26', 'Mar 26'],
+                datasets: [{
+                    label: 'New Customers',
+                    data: [1299, 5224, 5186, 22023, 6481, 11358, 5326, 8146, 7503, 4383, 4723, 3422, 5537, 6815, 6260, 20610, 6782, 13129, 3677],
+                    backgroundColor: 'rgba(254, 202, 87, 0.7)',
+                    stack: 'Stack 0'
+                }, {
+                    label: 'Returning Customers',
+                    data: [1897, 3706, 6081, 38024, 3303, 4276, 6556, 5896, 4541, 3948, 2852, 2561, 2355, 4388, 7319, 45898, 4116, 8563, 1430],
+                    backgroundColor: 'rgba(240, 147, 251, 0.7)',
+                    stack: 'Stack 0'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { color: '#888' }
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                        ticks: { color: '#888' },
+                        grid: { color: 'rgba(255,255,255,0.05)' }
+                    },
+                    y: {
+                        stacked: true,
+                        ticks: {
+                            color: '#888',
+                            callback: function(value) { return '£' + value.toLocaleString(); }
+                        },
+                        grid: { color: 'rgba(255,255,255,0.05)' }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
