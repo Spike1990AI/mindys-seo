@@ -561,6 +561,11 @@
                     legend: {
                         position: 'bottom',
                         labels: { color: '#888', padding: 15 }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ctx.label + ': $' + ctx.raw.toLocaleString()
+                        }
                     }
                 }
             }
@@ -632,6 +637,11 @@
                     legend: {
                         position: 'top',
                         labels: { color: '#888' }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ctx.dataset.label + ': $' + ctx.raw.toLocaleString()
+                        }
                     }
                 },
                 scales: {
@@ -664,6 +674,11 @@
                         display: true,
                         text: '$185K Total Revenue',
                         color: '#888'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ctx.label + ': $' + ctx.raw.toLocaleString()
+                        }
                     }
                 }
             }
@@ -692,6 +707,11 @@
                         display: true,
                         text: '$113K Total Revenue',
                         color: '#888'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ctx.label + ': $' + ctx.raw.toLocaleString()
+                        }
                     }
                 }
             }
